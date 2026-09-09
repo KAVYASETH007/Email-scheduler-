@@ -1,0 +1,43 @@
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://admin:password@127.0.0.1:5432/schedulerdb?schema=public"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String      @id @default(uuid())
+  email           String      @unique
+  name            String?
+  avatar          String?
+  slackWebhookUrl String?     
+  campaigns       Campaign[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @default(now()) @updatedAt
+}
+
+model Campaign {
+  id             String      @id @default(uuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
+  subject        String
+  body           String
+  scheduledStart DateTime
+  delayBetween   Int
+  hourlyLimit    Int
+  emails         EmailTask[]
+}
+
+model EmailTask {
+  id             String   @id @default(uuid())
+  campaignId     String
+  campaign       Campaign @relation(fields: [campaignId], references: [id])
+  recipientEmail String
+  status         String   @default("PENDING")
+  scheduledFor   DateTime
+  sentAt         DateTime?
+  
+  @@unique([campaignId, recipientEmail])
+}
